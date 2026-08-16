@@ -1,0 +1,25 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Local env / secrets
+.env
+
+# Local database files (created on first run via create_all + seed)
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploaded files (local storage; regenerated at runtime)
+uploads/
+
+# Logs
+*.log

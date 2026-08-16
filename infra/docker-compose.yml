@@ -1,0 +1,89 @@
+# HR ATS v2 基础设施（统一由一个目录管理的 Docker 服务）
+# 仅包含中间件：PostgreSQL + Redis + MinIO（外加开发调试 UI）
+# 数据使用 Docker 命名卷（不在项目目录内，避免 Windows 绑定挂载权限问题）
+#
+# 启动：  docker compose up -d
+# 停止：  docker compose down
+# 停止并清空数据： docker compose down -v
+#
+# 对应后端环境变量见 backend/.env（账号/端口需与此处保持一致）。
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: hr_postgres
+    environment:
+      POSTGRES_USER: ${PG_USER:-hr}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-hr_password}
+      POSTGRES_DB: ${PG_DB:-hr_ats}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-hr}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: hr_redis
+    command: ["redis-server", "--appendonly", "yes"]
+    # NOTE: host port mapped to 6380 because 6379 is already taken on this machine
+    # by another project's Redis (mineru-web-redis). If 6379 is free on your host,
+    # change this back to "6379:6379" and set REDIS_URL=redis://localhost:6379/0.
+    ports:
+      - "6380:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: hr_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-hrminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-hrminio_password}
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web Console
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc alias set m http://localhost:9000 ${MINIO_ROOT_USER:-hrminio} ${MINIO_ROOT_PASSWORD:-hrminio_password} >/dev/null 2>&1 && mc admin info m >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # --- 开发调试 UI（非必需，可注释掉） ---
+  adminer:
+    image: adminer
+    container_name: hr_adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: hr_redisinsight
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

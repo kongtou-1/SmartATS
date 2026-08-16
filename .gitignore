@@ -1,0 +1,56 @@
+# Environment and local overrides
+.env
+.env.*
+!.env.example
+
+# JavaScript dependencies and build output
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# TypeScript and Vite generated files
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
+# Python runtime files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local data and uploads
+backend/*.db
+backend/uploads/
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local junk / temp
+tmp/
+*.log
+
+# Python virtual environments
+.venv/
+venv/
+
+# Vite cache
+.vite/
+
+# Runtime uploads (resumes / offers) — generated at runtime, not source
+uploads/
+
+# WorkBuddy internal project data
+.workbuddy/
+
+# Stray screenshot artifact
+*screening-after.png
+
+# Excluded prototype (AI Studio export, not integrated with the main system)
+招聘管理后台/
+招聘管理后台.zip
+
